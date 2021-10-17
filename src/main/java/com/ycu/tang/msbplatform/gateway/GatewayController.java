@@ -44,7 +44,7 @@ public class GatewayController {
     dataUnit.setPage_view(new PageViewEdge(personIdObj, PageID.url(pageId), nonce));
     Data data = new Data(new Pedigree(DateUtils.getNowSec()), dataUnit);
 
-    pailService.writeData(properties.getPailPath(), data);
+    pailService.writeData(properties.getMasterRoot(), data);
   }
 
   @PostMapping("/event/person-property")
@@ -99,7 +99,7 @@ public class GatewayController {
               ));
     }
 
-    pailService.writeData(properties.getPailPath(), dataList);
+    pailService.writeData(properties.getMasterRoot(), dataList);
   }
 
   @PostMapping("/event/page_property")
@@ -115,6 +115,6 @@ public class GatewayController {
     EquivEdge equivEdge = new EquivEdge(PersonID.cookie(cookie), PersonID.cookie(cookie));
     DataUnit dataUnit = DataUnit.equiv(equivEdge);
 
-    pailService.writeData(properties.getPailPath(), new Data(new Pedigree(DateUtils.getNowSec()),dataUnit));
+    pailService.writeData(properties.getMasterRoot(), new Data(new Pedigree(DateUtils.getNowSec()),dataUnit));
   }
 }

@@ -1,6 +1,6 @@
 package com.ycu.tang.msbplatform.gateway.service.pailstructure;
 
-import com.backtype.hadoop.pail.PailStructure;
+import backtype.hadoop.pail.PailStructure;
 import org.apache.thrift.*;
 import org.apache.thrift.transport.TTransportException;
 

@@ -1,7 +1,6 @@
 package com.ycu.tang.msbplatform.gateway.service;
 
-import com.backtype.hadoop.pail.Pail;
-import com.backtype.support.Utils;
+import backtype.hadoop.pail.Pail;
 import com.ycu.tang.msbplatform.gateway.Properties;
 import com.ycu.tang.msbplatform.gateway.service.pailstructure.SplitDataPailStructure;
 import com.ycu.tang.msbplatform.gateway.thrift.Data;
@@ -27,7 +26,7 @@ public class PailService {
     if(!isPailExists(pailName)){
       pail = createPail(pailName);
     }else{
-      pail = new Pail(pailName, getHadoopConf());
+      pail = new Pail(getFs(), pailName);
     }
     Pail.TypedRecordOutputStream out = pail.openWrite();
     out.writeObject(data);
@@ -39,7 +38,7 @@ public class PailService {
     if(!isPailExists(pailName)){
       pail = createPail(pailName);
     }else{
-      pail = new Pail(pailName, getHadoopConf());
+      pail = new Pail(getFs(), pailName);
     }
     Pail.TypedRecordOutputStream out = pail.openWrite();
     out.writeObjects(data.toArray());
@@ -48,11 +47,15 @@ public class PailService {
 
   public Pail createPail(String pailName) throws IOException {
     FileSystem fs = new Path(pailName).getFileSystem(getHadoopConf());
-    return Pail.create(fs, pailName,new SplitDataPailStructure());
+    return Pail.create(getFs(), pailName, new SplitDataPailStructure());
+  }
+
+  public Pail getPail(String pailName) throws IOException {
+    return new Pail(getFs(), pailName);
   }
 
   public boolean isPailExists(String pailName) throws IOException {
-    return Utils.getFS(pailName, getHadoopConf()).exists(new Path(pailName));
+    return getFs().exists(new Path(pailName));
   }
 
   public Configuration getHadoopConf(){
@@ -61,5 +64,9 @@ public class PailService {
       hadoopConf.set("fs.default.name", properties.getNamenodeUrl());
     }
     return hadoopConf;
+  }
+
+  public FileSystem getFs() throws IOException {
+    return FileSystem.get(getHadoopConf());
   }
 }
