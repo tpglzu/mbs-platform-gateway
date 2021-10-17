@@ -1,4 +1,4 @@
-package com.ycu.tang.msbplatform.gateway.pails;
+package com.ycu.tang.msbplatform.gateway.service.pailstructure;
 
 import com.ycu.tang.msbplatform.gateway.thrift.Data;
 import com.ycu.tang.msbplatform.gateway.thrift.DataUnit;

@@ -5,11 +5,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class Properties {
-  // 工場ID
   @Value("${hadoop.pail.path}")
   private String pailPath;
 
+  @Value("${hadoop.namenode.url}")
+  private String namenodeUrl;
+
   public String getPailPath() {
     return pailPath;
+  }
+
+  public String getNamenodeUrl() {
+    return namenodeUrl;
   }
 }

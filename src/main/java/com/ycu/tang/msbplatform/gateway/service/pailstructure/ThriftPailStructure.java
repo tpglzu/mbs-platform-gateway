@@ -1,7 +1,6 @@
-package com.ycu.tang.msbplatform.gateway.pails;
+package com.ycu.tang.msbplatform.gateway.service.pailstructure;
 
 import com.backtype.hadoop.pail.PailStructure;
-import oracle.jvm.hotspot.jfr.ThreadGroupIDs;
 import org.apache.thrift.*;
 import org.apache.thrift.transport.TTransportException;
 

@@ -2,11 +2,10 @@ package com.ycu.tang.msbplatform.gateway;
 
 import com.ycu.tang.msbplatform.gateway.thrift.*;
 import com.ycu.tang.msbplatform.gateway.utils.DateUtils;
-import com.ycu.tang.msbplatform.gateway.utils.PailUtils;
+import com.ycu.tang.msbplatform.gateway.service.PailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,6 +22,9 @@ public class GatewayController {
 
   @Autowired
   protected Properties properties;
+
+  @Autowired
+  protected PailService pailService;
 
   @PostMapping("/event/page-view")
   void pageView(@RequestBody Map<String, Object> payload) throws IOException {
@@ -42,7 +44,7 @@ public class GatewayController {
     dataUnit.setPage_view(new PageViewEdge(personIdObj, PageID.url(pageId), nonce));
     Data data = new Data(new Pedigree(DateUtils.getNowSec()), dataUnit);
 
-    PailUtils.writeData(properties.getPailPath(), data);
+    pailService.writeData(properties.getPailPath(), data);
   }
 
   @PostMapping("/event/person-property")
@@ -97,7 +99,7 @@ public class GatewayController {
               ));
     }
 
-    PailUtils.writeData(properties.getPailPath(), dataList);
+    pailService.writeData(properties.getPailPath(), dataList);
   }
 
   @PostMapping("/event/page_property")
@@ -113,6 +115,6 @@ public class GatewayController {
     EquivEdge equivEdge = new EquivEdge(PersonID.cookie(cookie), PersonID.cookie(cookie));
     DataUnit dataUnit = DataUnit.equiv(equivEdge);
 
-    PailUtils.writeData(properties.getPailPath(), new Data(new Pedigree(DateUtils.getNowSec()),dataUnit));
+    pailService.writeData(properties.getPailPath(), new Data(new Pedigree(DateUtils.getNowSec()),dataUnit));
   }
 }
