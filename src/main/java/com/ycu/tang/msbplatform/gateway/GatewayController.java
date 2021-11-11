@@ -2,7 +2,9 @@ package com.ycu.tang.msbplatform.gateway;
 
 import com.ycu.tang.msbplatform.gateway.thrift.*;
 import com.ycu.tang.msbplatform.gateway.utils.DateUtils;
-import com.ycu.tang.msbplatform.gateway.service.PailService;
+import com.ycu.tang.msbplatform.service.KafkaService;
+import com.ycu.tang.msbplatform.service.PailService;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +29,11 @@ public class GatewayController {
   @Autowired
   protected PailService pailService;
 
+  @Autowired
+  protected KafkaService kafkaService;
+
   @PostMapping("/event/page-view")
-  void pageView(@RequestBody Map<String, Object> payload) throws IOException {
+  void pageView(@RequestBody Map<String, Object> payload) throws IOException, TException {
     String cookie = (String) payload.get("cookie");
     Integer userId = (Integer) payload.get("user_id");
     String pageId = (String) payload.get("pageId");
@@ -44,11 +50,12 @@ public class GatewayController {
     dataUnit.setPage_view(new PageViewEdge(personIdObj, PageID.url(pageId), nonce));
     Data data = new Data(new Pedigree(DateUtils.getNowSec()), dataUnit);
 
-    pailService.writeData(properties.getMasterRoot(), data);
+    pailService.writeData(properties.getNewRoot(), data);
+    kafkaService.send(properties.getKafkaTopicPageViews(), data);
   }
 
   @PostMapping("/event/person-property")
-  void personProperty(@RequestBody Map<String, Object> payload) throws IOException {
+  void personProperty(@RequestBody Map<String, Object> payload) throws IOException, TException {
     String cookie = (String) payload.get("cookie");
     Integer userId = (Integer) payload.get("user_id");
     String name = (String) payload.get("name");
@@ -99,7 +106,9 @@ public class GatewayController {
               ));
     }
 
-    pailService.writeData(properties.getMasterRoot(), dataList);
+    pailService.writeData(properties.getNewRoot(), dataList);
+
+    kafkaService.send(properties.getKafkaTopicPersonProperty(), dataList);
   }
 
   @PostMapping("/event/page_property")
@@ -108,13 +117,23 @@ public class GatewayController {
   }
 
   @PostMapping("/event/person_equiv")
-  void personEquiv(@RequestBody Map<String, Object> payload) throws IOException {
-    String cookie = (String) payload.get("cookie");
-    Integer userId = (Integer) payload.get("user_id");
+  void personEquiv(@RequestBody Map<String, Object> payload) throws IOException, TException {
+    Integer userId1 = (Integer) payload.get("user_id_1");
+    Integer userId2 = (Integer) payload.get("user_id_2");
 
-    EquivEdge equivEdge = new EquivEdge(PersonID.cookie(cookie), PersonID.cookie(cookie));
+    EquivEdge equivEdge = new EquivEdge(PersonID.user_id(userId1), PersonID.user_id(userId2));
     DataUnit dataUnit = DataUnit.equiv(equivEdge);
 
-    pailService.writeData(properties.getMasterRoot(), new Data(new Pedigree(DateUtils.getNowSec()),dataUnit));
+    Data data = new Data(new Pedigree(DateUtils.getNowSec()),dataUnit);
+
+    pailService.writeData(properties.getNewRoot(), data );
+    kafkaService.send(properties.getKafkaTopicPersonEquiv(), data);
+  }
+
+
+  @PreDestroy
+  void shutdown(){
+    logger.info("do shutdown !!!");
+    kafkaService.close();
   }
 }

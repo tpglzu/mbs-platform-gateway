@@ -1,4 +1,4 @@
-package com.ycu.tang.msbplatform.gateway.service.pailstructure;
+package com.ycu.tang.msbplatform.service.pailstructure;
 
 import backtype.hadoop.pail.PailStructure;
 import org.apache.thrift.*;

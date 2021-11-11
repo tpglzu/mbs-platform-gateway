@@ -23,6 +23,18 @@ public class Properties {
   @Value("${hadoop.pail.path.new.root}")
   private String newRoot;
 
+  @Value("${kafka.url}")
+  private String kafkaUrl;
+
+  @Value("${kafka.topic.page_views}")
+  private String kafkaTopicPageViews;
+
+  @Value("${kafka.topic.person_property}")
+  private String kafkaTopicPersonProperty;
+
+  @Value("${kafka.topic.person_equiv}")
+  private String kafkaTopicPersonEquiv;
+
   public String getNamenodeUrl() {
     return namenodeUrl;
   }
@@ -45,5 +57,21 @@ public class Properties {
 
   public String getNewRoot() {
     return newRoot;
+  }
+
+  public String getKafkaUrl() {
+    return kafkaUrl;
+  }
+
+  public String getKafkaTopicPageViews() {
+    return kafkaTopicPageViews;
+  }
+
+  public String getKafkaTopicPersonProperty() {
+    return kafkaTopicPersonProperty;
+  }
+
+  public String getKafkaTopicPersonEquiv() {
+    return kafkaTopicPersonEquiv;
   }
 }

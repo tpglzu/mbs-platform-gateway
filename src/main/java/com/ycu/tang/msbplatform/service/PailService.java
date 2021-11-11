@@ -1,8 +1,8 @@
-package com.ycu.tang.msbplatform.gateway.service;
+package com.ycu.tang.msbplatform.service;
 
 import backtype.hadoop.pail.Pail;
 import com.ycu.tang.msbplatform.gateway.Properties;
-import com.ycu.tang.msbplatform.gateway.service.pailstructure.SplitDataPailStructure;
+import com.ycu.tang.msbplatform.service.pailstructure.DataPailStructure;
 import com.ycu.tang.msbplatform.gateway.thrift.Data;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -47,7 +47,7 @@ public class PailService {
 
   public Pail createPail(String pailName) throws IOException {
     FileSystem fs = new Path(pailName).getFileSystem(getHadoopConf());
-    return Pail.create(getFs(), pailName, new SplitDataPailStructure());
+    return Pail.create(getFs(), pailName, new DataPailStructure());
   }
 
   public Pail getPail(String pailName) throws IOException {
@@ -61,7 +61,9 @@ public class PailService {
   public Configuration getHadoopConf(){
     if(hadoopConf == null){
       hadoopConf = new Configuration();
-      hadoopConf.set("fs.default.name", properties.getNamenodeUrl());
+      if (!properties.getNamenodeUrl().equals("")) {
+        hadoopConf.set("fs.default.name", properties.getNamenodeUrl());
+      }
     }
     return hadoopConf;
   }
