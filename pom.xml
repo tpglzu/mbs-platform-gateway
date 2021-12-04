@@ -21,15 +21,15 @@
 	<repositories>
 		<repository>
 			<id>central</id>
-			<url>http://repo1.maven.org/maven2</url>
+			<url>https://repo1.maven.org/maven2</url>
 		</repository>
 		<repository>
 			<id>clojars</id>
-			<url>http://clojars.org/repo</url>
+			<url>https://clojars.org/repo</url>
 		</repository>
 		<repository>
 			<id>conjars</id>
-			<url>http://conjars.org/repo</url>
+			<url>https://conjars.org/repo</url>
 		</repository>
 	</repositories>
 
@@ -84,6 +84,15 @@
 			<groupId>org.apache.kafka</groupId>
 			<artifactId>kafka-clients</artifactId>
 			<version>0.10.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
 		</dependency>
 	</dependencies>
 

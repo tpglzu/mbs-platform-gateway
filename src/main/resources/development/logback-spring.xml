@@ -38,4 +38,8 @@
         <appender-ref ref="Console"/>
     </root>
 
+<!--    <logger name="org.springframework.jdbc.core.JdbcTemplate">-->
+<!--        <level value="debug" />-->
+<!--    </logger>-->
+
 </configuration>
