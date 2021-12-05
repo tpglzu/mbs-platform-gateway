@@ -2,6 +2,10 @@ package com.ycu.tang.msbplatform.service;
 
 import com.ycu.tang.msbplatform.gateway.utils.DateUtils;
 import com.ycu.tang.msbplatform.gateway.utils.MapUtils;
+import com.ycu.tang.msbplatform.service.costing.Allocation;
+import com.ycu.tang.msbplatform.service.costing.CostCalculator;
+import com.ycu.tang.msbplatform.service.costing.Department;
+import com.ycu.tang.msbplatform.service.costing.ResourceUsage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -12,6 +16,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -30,33 +35,36 @@ public class CostingService {
   }
 
   @Transactional
-  public Integer startLot(Integer planId, Integer prodId) {
-    String sql = "INSERT INTO lots (prod_plan_id, production_id, start_time) VALUES (:prod_plan_id, :production_id, current_timestamp) RETURNING id";
+  public Integer startLot(Integer planId, Integer prodId, String dateStr) {
+    String sql = "INSERT INTO lots (prod_plan_id, production_id, start_time) " +
+            "VALUES (:prod_plan_id, :production_id, :start_time) RETURNING id";
     KeyHolder keyHolder = new GeneratedKeyHolder();
     SqlParameterSource namedParameters = new MapSqlParameterSource(
             MapUtils.of(
-                    new String[]{"prod_plan_id", "production_id"},
-                    new Object[]{planId, prodId}));
+                    new String[]{"prod_plan_id", "production_id", "start_time"},
+                    new Object[]{planId, prodId, DateUtils.parseDate(dateStr)}));
     int result = npJdbcTemplate.update(sql, namedParameters, keyHolder);
     return keyHolder.getKey().intValue();
   }
 
   @Transactional
-  public boolean stopLot(Integer lotId, Map<String, Object> lotInfo) {
+  public boolean stopLot(Integer lotId, Map<String, Object> lotInfo, String dateStr) {
+
+    Calendar calendar = DateUtils.parseDate(dateStr);
+
     int prodCnt = (int) lotInfo.get("prod_cnt");
-    Double totalCost = calLotTotalCost(lotId);
-    Long singleCost = Math.round(totalCost / prodCnt);
+    int totalCost = calLotTotalCost(lotId);
+    int singleCost = Math.round(totalCost / prodCnt);
     lotInfo.put("total_cost", totalCost);
     lotInfo.put("single_cost", singleCost);
+    lotInfo.put("end_time", calendar);
     updateLot(lotId, lotInfo);
 
-
-    Object[] dateAndHour = DateUtils.getNowDateAndHour();
     Map<String, Object> prodCostInfo = findLotInfoByLotId(lotId);
 
-    prodCostInfo.put("date", dateAndHour[2]);
-    prodCostInfo.put("hour", dateAndHour[1]);
-    prodCostInfo.put("cal_time", dateAndHour[2]);
+    prodCostInfo.put("date", calendar);
+    prodCostInfo.put("hour", calendar.get(Calendar.HOUR_OF_DAY));
+    prodCostInfo.put("cal_time", calendar);
     prodCostInfo.put("cost",
             calAverageCost((int)prodCostInfo.get("prod_plan_id"), (int)prodCostInfo.get("production_id")));
 
@@ -89,12 +97,14 @@ public class CostingService {
       resourceUsage.putIfAbsent("actual_price", null);
     }
 
-    int[] result = npJdbcTemplate.batchUpdate(sql, (Map<String, ?>[]) resourceUsageList.toArray(new Map[0]));
+    int[] result = npJdbcTemplate.batchUpdate(sql, resourceUsageList.toArray(new Map[0]));
   }
 
-  private Double calLotTotalCost(Integer lotId) {
-    String sql =
+  private int calLotTotalCost(Integer lotId) {
+    String resourceUsageSql =
             "SELECT " +
+            " lt.prod_plan_id," +
+            " lt.production_id," +
             " lr.resource_id," +
             " lr.resource_cnt," +
             " lr.actual_price," +
@@ -102,15 +112,44 @@ public class CostingService {
             " rs.type2 as resource_type2," +
             " rs.agg_department_id," +
             " rs.standard_price," +
-            " dep.type as department_id "+
+            " dep.type as department_type, "+
+            " dep.id as department_id "+
             "FROM " +
-            " lots_resources as lr" +
+            " lots as lt " +
+            " inner join lots_resources as lr on lt.id = lr.lot_id" +
             " inner join resources as rs on lr.resource_id = rs.id" +
-            " left join departments as dep on rs.agg_department_id = dep.id" +
+            " left join departments as dep on rs.agg_department_id = dep.id " +
             "WHERE " +
-            " lr.lot_id = :lot_id";
-    //TODO
-    return 200D;
+            " lt.id = :lot_id";
+    List<ResourceUsage> resourceUsageList = npJdbcTemplate.query(
+            resourceUsageSql,
+            MapUtils.of("lot_id", lotId),
+            new ResourceUsage.RowMapper());
+
+
+    String allocationSql =
+            "SELECT " +
+            " a.*, " +
+            " dep.type as department_type " +
+            "FROM " +
+            " allocations as a " +
+            " left join departments as dep on a.to_department = dep.id " +
+            "WHERE " +
+            " prod_plan_id = :prod_plan_id";
+    List<Allocation> allocationList = npJdbcTemplate.query(
+            allocationSql,
+            MapUtils.of("prod_plan_id", resourceUsageList.get(0).getProdPlanId()),
+            new Allocation.RowMapper()) ;
+
+    String departmentSql =
+            "SELECT * FROM departments";
+    List<Department> departmentList = npJdbcTemplate.query(departmentSql, new Department.RowMapper());
+
+    return CostCalculator.calTotalCost(
+            resourceUsageList,
+            allocationList,
+            resourceUsageList.get(0).getProductionId(),
+            departmentList);
   }
 
   private Integer calAverageCost(Integer planId, Integer lotId) {
@@ -142,11 +181,10 @@ public class CostingService {
   private void updateLot(Integer lotId, Map<String, Object> lotInfo) {
     String sql = "UPDATE lots SET " +
             "prod_cnt = :prod_cnt, " +
-            "end_time = current_timestamp, " +
+            "end_time = :end_time, " +
             "total_cost = :total_cost, " +
             "single_cost = :single_cost " +
             "WHERE id = :lot_Id";
-    KeyHolder keyHolder = new GeneratedKeyHolder();
 
     lotInfo.put("lot_Id", lotId);
     SqlParameterSource namedParameters = new MapSqlParameterSource(lotInfo);

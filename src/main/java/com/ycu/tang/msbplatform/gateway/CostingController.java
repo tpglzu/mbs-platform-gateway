@@ -26,8 +26,11 @@ public class CostingController {
   }
 
   @PostMapping("/plan/{plan_id}/lot/start/{prod_id}")
-  Map<String, Integer> startLot(@PathVariable("plan_id") Integer planId, @PathVariable("prod_id") Integer prodId){
-    Integer id = costingService.startLot(planId, prodId);
+  Map<String, Integer> startLot(
+          @PathVariable("plan_id") Integer planId,
+          @PathVariable("prod_id") Integer prodId,
+          @RequestParam("datetime") String dateStr){
+    Integer id = costingService.startLot(planId, prodId, dateStr);
     return MapUtils.of("lot_id", id);
   }
 
@@ -38,8 +41,11 @@ public class CostingController {
 
   @PostMapping("/lot/{lot_id}/stop")
   @Transactional
-  void stopLot(@PathVariable("lot_id") Integer lotId, @RequestBody Map<String, Object> payload){
-    boolean result = costingService.stopLot(lotId, payload);
+  void stopLot(
+          @PathVariable("lot_id") Integer lotId,
+          @RequestBody Map<String, Object> payload,
+          @RequestParam("datetime") String dateStr){
+    boolean result = costingService.stopLot(lotId, payload, dateStr);
   }
 
 }
