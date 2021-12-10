@@ -29,8 +29,8 @@ public class CostingController {
   Map<String, Integer> startLot(
           @PathVariable("plan_id") Integer planId,
           @PathVariable("prod_id") Integer prodId,
-          @RequestParam("datetime") String dateStr){
-    Integer id = costingService.startLot(planId, prodId, dateStr);
+          @RequestBody Map<String, Object> payload){
+    Integer id = costingService.startLot(planId, prodId, payload);
     return MapUtils.of("lot_id", id);
   }
 
@@ -43,9 +43,24 @@ public class CostingController {
   @Transactional
   void stopLot(
           @PathVariable("lot_id") Integer lotId,
-          @RequestBody Map<String, Object> payload,
-          @RequestParam("datetime") String dateStr){
-    boolean result = costingService.stopLot(lotId, payload, dateStr);
+          @RequestBody Map<String, Object> payload){
+    boolean result = costingService.stopLot(lotId, payload);
   }
 
+  @GetMapping("/production/{prod_id}/recipes")
+  @Transactional
+  List<Map<String, Object>>  getProdRecipes(@PathVariable("prod_id") Integer prodId){
+    return costingService.getProdRecipes(prodId);
+  }
+
+  @GetMapping("/plan/{plan_id}/production/{prod_id}/price/{type}")
+  @Transactional
+  Map<String, Double[]>  getPriceView(
+          @PathVariable("plan_id") Integer planId,
+          @PathVariable("prod_id") Integer prodId,
+          @PathVariable("type") String type,
+          @RequestParam("start_date") String startDate,
+          @RequestParam("end_date") String endDate){
+    return costingService.getProdPrice(planId, prodId, type, startDate, endDate);
+  }
 }

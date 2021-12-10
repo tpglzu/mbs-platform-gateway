@@ -24,7 +24,7 @@ public class DateUtils {
 
   public static Calendar parseDate(String strDate) {
     try {
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
       Date date = sdf.parse(strDate);
       Calendar calendar = Calendar.getInstance();
       calendar.setTime(date);
@@ -37,6 +37,5 @@ public class DateUtils {
   //カレンダーを年月日の文字列で取得
   public static String getDateString(Calendar tmpCal) {
     return tmpCal.get(Calendar.YEAR) + "/" + tmpCal.get(Calendar.MONTH) + "/" + tmpCal.get(Calendar.DATE);
-
   }
 }
