@@ -35,8 +35,11 @@ public class CostingController {
   }
 
   @PostMapping("/lot/{lot_id}/resource_usage")
-  void processLot(@PathVariable("lot_id") Integer lotId, @RequestBody List<Map<String, Object>> payload){
-    costingService.insertLotResources(lotId, payload);
+  void processLot(
+          @PathVariable("lot_id") Integer lotId,
+          @RequestBody List<Map<String, Object>> payload,
+          @RequestParam("datetime") String datetime){
+    costingService.insertLotResources(lotId, payload, datetime);
   }
 
   @PostMapping("/lot/{lot_id}/stop")

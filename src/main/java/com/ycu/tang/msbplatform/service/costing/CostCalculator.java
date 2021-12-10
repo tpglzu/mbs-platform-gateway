@@ -130,30 +130,32 @@ public class CostCalculator {
 
     // 補助部門数
     int depSNum = departmentSSum2.size();
-    // B2マトリックス構造
-    SimpleMatrix mB2 = new SimpleMatrix(depSNum, depSNum);
-    SimpleMatrix mIdentity = SimpleMatrix.identity(depSNum);
-    SimpleMatrix mD2 = new SimpleMatrix(1, depSNum);
-    List<Integer> depIdSList = departmentSSum2.keySet().stream().sorted().collect(Collectors.toList());
-    for (int i = 0; i < depSNum; i++) {
-      int fromDepId = depIdSList.get(i);
-      for (int j = 0; j < depSNum; j++) {
-        int toDepId = depIdSList.get(j);
-        Allocation allocation =
-                allocationList
-                        .stream()
-                        .filter(a -> a.getFormDepartment() == fromDepId && a.getToDepartment() == toDepId)
-                        .findFirst()
-                        .get();
-        mB2.set(i, j, allocation.getRatio());
+    if(depSNum > 0) {
+      // B2マトリックス構造
+      SimpleMatrix mB2 = new SimpleMatrix(depSNum, depSNum);
+      SimpleMatrix mIdentity = SimpleMatrix.identity(depSNum);
+      SimpleMatrix mD2 = new SimpleMatrix(1, depSNum);
+      List<Integer> depIdSList = departmentSSum2.keySet().stream().sorted().collect(Collectors.toList());
+      for (int i = 0; i < depSNum; i++) {
+        int fromDepId = depIdSList.get(i);
+        for (int j = 0; j < depSNum; j++) {
+          int toDepId = depIdSList.get(j);
+          Allocation allocation =
+                  allocationList
+                          .stream()
+                          .filter(a -> a.getFormDepartment() == fromDepId && a.getToDepartment() == toDepId)
+                          .findFirst()
+                          .get();
+          mB2.set(i, j, allocation.getRatio());
+        }
+        mD2.set(0, i, departmentSSum2.get(fromDepId));
       }
-      mD2.set(0, i, departmentSSum2.get(fromDepId));
-    }
-    // D2' = D2(I-B2)^-1
-    SimpleMatrix mD2Dash = mD2.mult(mIdentity.minus(mB2).invert());
-    for (int i = 0; i < depSNum; i++) {
-      int dep = depIdSList.get(i);
-      departmentSSum3.put(dep, (int) mD2Dash.get(0, i));
+      // D2' = D2(I-B2)^-1
+      SimpleMatrix mD2Dash = mD2.mult(mIdentity.minus(mB2).invert());
+      for (int i = 0; i < depSNum; i++) {
+        int dep = depIdSList.get(i);
+        departmentSSum3.put(dep, (int) mD2Dash.get(0, i));
+      }
     }
 
     for (Integer depSKey : departmentSSum3.keySet()) {
